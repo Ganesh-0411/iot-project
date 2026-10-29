@@ -1,0 +1,7 @@
+flask
+flask-cors
+easyocr
+python-docx
+pillow
+opencv-python
+pyperclip

@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.env
+.venv/
+venv/
+env/
+
+# Logs
+*.log
+desktop_log.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Shortcuts
+*.lnk
+
+# VS Code
+.vscode/
+
+# Notes/data that may be personal
+notes/

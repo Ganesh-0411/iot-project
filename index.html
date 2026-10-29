@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScribeFlow | AI Handwriting Digitizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #22d3ee;
+            --glass: rgba(30, 41, 59, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent),
+                              radial-gradient(circle at bottom left, rgba(34, 211, 238, 0.1), transparent);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            animation: slideUp 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .canvas-area {
+            position: relative;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .canvas-toolbar {
+            padding: 1rem 1.5rem;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        canvas {
+            background: #fff;
+            cursor: crosshair;
+            width: 100%;
+            height: 600px;
+            touch-action: none;
+        }
+
+        .controls {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            height: fit-content;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background: rgba(34, 211, 238, 0.1);
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        #results {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .pressure-info {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ScribeFlow</h1>
+        <p class="subtitle">Intelligent Handwriting Capture & Digitization</p>
+    </header>
+
+    <div class="main-container">
+        <div class="canvas-area">
+            <div class="canvas-toolbar">
+                <div class="status-badge">Wacom Pressure Support Active</div>
+                <div class="pressure-info" id="pressureVal">Pressure: 0.00</div>
+                <button class="btn btn-secondary" onclick="clearCanvas()">Clear Board</button>
+            </div>
+            <canvas id="drawCanvas"></canvas>
+        </div>
+
+        <div class="controls">
+            <h3>Digitize</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Convert your sketches or notes into structured DOCX documents using Claude 3.5 Vision.</p>
+            
+            <button id="processBtn" class="btn btn-primary" onclick="processHandwriting()">
+                <div id="spinner" class="loading-spinner"></div>
+                Analyze & Export
+            </button>
+
+            <div id="results">
+                <div class="result-card">
+                    <p style="font-size: 0.8rem; color: var(--accent); font-weight: 600; text-transform: uppercase;">Analysis</p>
+                    <p id="analysisText" style="font-size: 0.9rem;"></p>
+                </div>
+                <a id="downloadLink" href="#" class="btn btn-secondary" style="color: var(--accent); border-color: var(--accent);">
+                    Download .DOCX
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawCanvas');
+        const ctx = canvas.getContext('2d');
+        const pressureDisplay = document.getElementById('pressureVal');
+        
+        // Match display size with coordinate size
+        function resize() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let drawing = false;
+
+        canvas.addEventListener('pointerdown', (e) => {
+            drawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (!drawing) return;
+            
+            const pressure = e.pressure !== undefined && e.pressure > 0 ? e.pressure : 0.5;
+            pressureDisplay.innerText = `Pressure: ${pressure.toFixed(2)}`;
+            
+            ctx.lineWidth = Math.max(1, pressure * 12);
+            ctx.strokeStyle = '#1e293b';
+            
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
+        });
+
+        canvas.addEventListener('pointerup', () => drawing = false);
+        canvas.addEventListener('pointerout', () => drawing = false);
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('results').style.display = 'none';
+        }
+
+        async function processHandwriting() {
+            const btn = document.getElementById('processBtn');
+            const spinner = document.getElementById('spinner');
+            const results = document.getElementById('results');
+            
+            // Image data
+            // We want to send a white background PNG
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.fillStyle = '#ffffff';
+            tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tCtx.drawImage(canvas, 0, 0);
+            
+            const imageBase64 = tempCanvas.toDataURL('image/png').split(',')[1];
+
+            btn.disabled = true;
+            spinner.style.display = 'block';
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageBase64 })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error);
+
+                document.getElementById('analysisText').innerText = data.analysis.summary || "Digitization complete.";
+                
+                // Show automatic save location
+                const saveMsg = document.createElement('p');
+                saveMsg.style.cssText = "font-size: 0.85rem; color: #10b981; margin-top: 10px; font-weight: 500;";
+                saveMsg.innerHTML = `✅ Saved to: <span style="font-family: monospace; color: #fff;">${data.saved_path}</span>`;
+                
+                const resultsDiv = document.getElementById('results');
+                // Remove any previous save message
+                const oldMsg = resultsDiv.querySelector('.save-msg');
+                if (oldMsg) oldMsg.remove();
+                saveMsg.className = 'save-msg';
+                resultsDiv.insertBefore(saveMsg, document.getElementById('downloadLink'));
+
+                document.getElementById('downloadLink').href = data.docx_url;
+                document.getElementById('downloadLink').innerText = "Open / Download Copy";
+                results.style.display = 'block';
+            } catch (err) {
+                alert("Error digitizing: " + err.message);
+            } finally {
+                btn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
